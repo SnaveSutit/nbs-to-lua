@@ -88,8 +88,9 @@ local groupCount = 0
 local currentGroupIndex = 0
 
 function playSong(name)
-	print("Requesting Song...")
-	local response = http.get(songGetUrl .. name)
+	local songUrl = songGetUrl .. name
+	print("GET " .. songUrl)
+	local response = http.get(songUrl)
 	print("Response Recieved!")
 	local song = textutils.unserialise(response.readAll())
 	response.close()
@@ -159,7 +160,9 @@ function main()
 	while true do
 		local success, value
 		if not paused then
+			print("Player Resume")
 			success, value = coroutine.resume(songThread, songName)
+			print("Player Yield")
 		else
 			success = true
 			value = os.startTimer(0.05)
