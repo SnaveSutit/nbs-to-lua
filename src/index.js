@@ -64,15 +64,17 @@ function convert(song_path, song_name) {
 
 	string_out = `{timing=${1 / file.Tempo},notes={${string_out}}}`
 
-	manifest[song_name] = {
+	const safe_song_name = song_name.replaceAll(/_*[^\w\d]+_*/g, '_')
+	manifest[safe_song_name] = {
 		author: file.SongAuthor,
 		originalAuthor: file.OriginalAuthor,
 	}
 
-	fs.writeFileSync(pathjs.join(outputFolder, `${song_name}`), string_out)
+	fs.writeFileSync(pathjs.join(outputFolder, safe_song_name), string_out)
 }
 
 const files = fs.readdirSync(song_dir)
+fs.rmSync(outputFolder, { recursive: true })
 fs.mkdirSync(outputFolder, { recursive: true })
 
 for (const file of files) {
