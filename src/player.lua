@@ -15,7 +15,7 @@ function loadRandomSong(lastSong)
 	local index, chosenSong
 	repeat
 		index = math.random(#manifest)
-		chosenSong = manifest[index]
+		chosenSong, _ = pairs(manifest)[index]
 	until not (lastSong == chosenSong)
 
 	manifest.close()
