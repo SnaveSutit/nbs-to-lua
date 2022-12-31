@@ -5,7 +5,7 @@ local manifestUrl =
 
 -- local songFiles = fs.list("./songs/")
 
-function loadRandomSong(lastSong)
+local function loadRandomSong(lastSong)
 	if lastSong then
 		os.unloadAPI(lastSong)
 	end
@@ -38,22 +38,22 @@ local notes, timing
 local mainVolume = 100
 local drumsVolume = 50
 
-function playButtonSound()
+local function playButtonSound()
 	peripheral.call("back", "playNote", "bit", 1, 18)
 end
 
-function newline(n)
+local function newline(n)
 	cursorY = cursorY + (n or 1)
 	term.setCursorPos(1, cursorY)
 end
 
-function clearTerm()
+local function clearTerm()
 	cursorY = 1
 	term.clear()
 	term.setCursorPos(1, cursorY)
 end
 
-function drawProgressBar(max, cur, label)
+local function drawProgressBar(max, cur, label)
 	local value = cur / max
 	local maxBarFill = termSizeX - 2
 	local curBarFill = maxBarFill * value
@@ -73,7 +73,7 @@ function drawProgressBar(max, cur, label)
 	)
 end
 
-function makePaddedText(text, left, right, char)
+local function makePaddedText(text, left, right, char)
 	char = char or " "
 	local padding
 	if left and right then
@@ -89,7 +89,7 @@ end
 local groupCount = 0
 local currentGroupIndex = 0
 
-function playSong(name)
+local function playSong(name)
 	local response = http.get(songGetUrl .. name)
 	local song = textutils.unserialise(response.readAll())
 	response.close()
@@ -121,7 +121,7 @@ function playSong(name)
 end
 songThread = coroutine.create(playSong)
 
-function drawScreen()
+local function drawScreen()
 	clearTerm()
 	term.write(makePaddedText(" X", true))
 	newline()
@@ -138,7 +138,7 @@ function drawScreen()
 	drawProgressBar(100, drumsVolume, "Drum Volume")
 end
 
-function nextSong()
+local function nextSong()
 	paused = true
 	songName = makePaddedText("...Intermission...", true, true)
 	drawScreen()
