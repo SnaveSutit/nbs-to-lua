@@ -10,13 +10,14 @@ function loadRandomSong(lastSong)
 		os.unloadAPI(lastSong)
 	end
 
-	local manifest = textutils.unserialiseJSON(http.get(manifestUrl).readAll())
+	local response = http.get(manifestUrl).readAll()
+	local manifest = textutils.unserialiseJSON(response)
+	response.close()
 
 	local songList = {}
 	for songName, _ in pairs(manifest) do
 		table.insert(songList, songName)
 	end
-	manifest.close()
 
 	local index, chosenSong
 	repeat
