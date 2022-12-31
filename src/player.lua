@@ -91,7 +91,7 @@ function playSong(name)
 	local songUrl = songGetUrl .. name
 	print("GET " .. songUrl)
 	local response = http.get(songUrl)
-	print("Response Recieved!")
+	print("Response Recieved: " .. tostring(response))
 	local song = textutils.unserialise(response.readAll())
 	response.close()
 	print(song.timing)
