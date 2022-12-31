@@ -46,9 +46,9 @@ function newline(n)
 end
 
 function clearTerm()
-	-- cursorY = 1
-	-- term.clear()
-	-- term.setCursorPos(1, cursorY)
+	cursorY = 1
+	term.clear()
+	term.setCursorPos(1, cursorY)
 end
 
 function drawProgressBar(max, cur, label)
@@ -89,9 +89,7 @@ local currentGroupIndex = 0
 
 function getSongData(name)
 	local songUrl = songGetUrl .. name
-	print("GET " .. songUrl)
 	local response = http.get(songUrl)
-	print("Response Recieved: " .. tostring(response))
 	local songData = textutils.unserialise(response.readAll())
 	response.close()
 	return songData
@@ -126,20 +124,20 @@ end
 songThread = coroutine.create(playSong)
 
 function drawScreen()
-	-- clearTerm()
-	-- term.write(makePaddedText(" X", true))
-	-- newline()
-	-- term.write(makePaddedText(" Now Playing ", true, true, "-"))
-	-- newline(2)
-	-- term.write(makePaddedText(songName, true, true))
-	-- newline(2)
-	-- term.write(makePaddedText((paused and "|>" or "||") .. "    >>", true, true))
-	-- newline(2)
-	-- drawProgressBar(groupCount, currentGroupIndex)
-	-- newline(2)
-	-- drawProgressBar(100, mainVolume, "Main Volume")
-	-- newline(2)
-	-- drawProgressBar(100, drumsVolume, "Drum Volume")
+	clearTerm()
+	term.write(makePaddedText(" X", true))
+	newline()
+	term.write(makePaddedText(" Now Playing ", true, true, "-"))
+	newline(2)
+	term.write(makePaddedText(songName, true, true))
+	newline(2)
+	term.write(makePaddedText((paused and "|>" or "||") .. "    >>", true, true))
+	newline(2)
+	drawProgressBar(groupCount, currentGroupIndex)
+	newline(2)
+	drawProgressBar(100, mainVolume, "Main Volume")
+	newline(2)
+	drawProgressBar(100, drumsVolume, "Drum Volume")
 end
 
 function nextSong()
@@ -160,12 +158,7 @@ function main()
 			if not songData then
 				songData = getSongData(songName)
 			end
-			print("Player Resume")
 			success, value = coroutine.resume(songThread)
-			print(
-				"Player Yield: Success = " ..
-					tostring(success) .. " Value = " .. tostring(value)
-			)
 		else
 			success = true
 			value = os.startTimer(0.05)
