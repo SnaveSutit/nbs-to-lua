@@ -1,18 +1,25 @@
-local songFiles = fs.list("./songs/")
+local songGetUrl =
+	"https://raw.githubusercontent.com/SnaveSutit/nbs-to-lua/main/generated_songs/"
+local manifestUrl =
+	"https://raw.githubusercontent.com/SnaveSutit/nbs-to-lua/main/manifest.json"
+
+-- local songFiles = fs.list("./songs/")
 
 function loadRandomSong(lastSong)
 	if lastSong then
 		os.unloadAPI(lastSong)
 	end
 
-	local index, chosenFile, chosenSongName
-	repeat
-		index = math.random(#songFiles)
-		chosenFile = songFiles[index]
-		chosenSongName = string.sub(songFiles[index], 1, #chosenFile - 4)
-	until not (lastSong == chosenSongName)
+	local manifest = textutils.unserialiseJSON(http.get(manifestUrl).readAll())
 
-	return chosenSongName
+	local index, chosenSong
+	repeat
+		index = math.random(#manifest)
+		chosenSong = manifest[index]
+	until not (lastSong == chosenSong)
+
+	manifest.close()
+	return chosenSong
 end
 
 local cursorY = 1
@@ -77,9 +84,12 @@ local groupCount = 0
 local currentGroupIndex = 0
 
 function playSong(name)
-	os.loadAPI("./songs/" .. name .. ".lua")
-	timing = _G[name].timing
-	notes = _G[name].notes
+	local song = textutils.unserialise(http.get(songGetUrl .. name).readAll())
+	-- os.loadAPI("./songs/" .. name .. ".lua")
+	-- timing = _G[name].timing
+	-- notes = _G[name].notes
+	notes = song.notes
+	timing = song.timing
 	groupCount = #notes
 
 	for groupIndex, group in pairs(notes) do

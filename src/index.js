@@ -62,14 +62,14 @@ function convert(song_path, song_name) {
 	}
 	string_out += '},'
 
-	string_out = `timing=${1 / file.Tempo};notes={${string_out}}`
+	string_out = `{timing=${1 / file.Tempo},notes={${string_out}}}`
 
 	manifest[song_name] = {
 		author: file.SongAuthor,
 		originalAuthor: file.OriginalAuthor,
 	}
 
-	fs.writeFileSync(pathjs.join(outputFolder, `${song_name}.lua`), string_out)
+	fs.writeFileSync(pathjs.join(outputFolder, `${song_name}`), string_out)
 }
 
 const files = fs.readdirSync(song_dir)
