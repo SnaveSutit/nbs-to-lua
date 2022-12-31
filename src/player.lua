@@ -134,6 +134,8 @@ function drawScreen()
 	drawProgressBar(1000, mainVolume, "Main Volume")
 	newline(2)
 	drawProgressBar(100, drumsVolume, "Drum Volume")
+	newline(termSizeY - cursorY)
+	term.write(makePaddedText("Created by SnaveSutit", false, true))
 end
 
 function nextSong()
