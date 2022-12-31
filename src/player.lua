@@ -162,7 +162,10 @@ function main()
 		if not paused then
 			print("Player Resume")
 			success, value = coroutine.resume(songThread, songName)
-			print("Player Yield")
+			print(
+				"Player Yield: Success = " ..
+					tostring(success) .. " Value = " .. tostring(value)
+			)
 		else
 			success = true
 			value = os.startTimer(0.05)
