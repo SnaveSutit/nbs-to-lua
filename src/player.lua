@@ -3,8 +3,6 @@ local songGetUrl =
 local manifestUrl =
 	"https://raw.githubusercontent.com/SnaveSutit/nbs-to-lua/main/manifest.json"
 
--- local songFiles = fs.list("./songs/")
-
 function loadRandomSong(lastSong)
 	if lastSong then
 		os.unloadAPI(lastSong)
@@ -48,9 +46,9 @@ function newline(n)
 end
 
 function clearTerm()
-	cursorY = 1
-	term.clear()
-	term.setCursorPos(1, cursorY)
+	-- cursorY = 1
+	-- term.clear()
+	-- term.setCursorPos(1, cursorY)
 end
 
 function drawProgressBar(max, cur, label)
@@ -90,7 +88,9 @@ local groupCount = 0
 local currentGroupIndex = 0
 
 function playSong(name)
+	print("Requesting Song...")
 	local response = http.get(songGetUrl .. name)
+	print("Response Recieved!")
 	local song = textutils.unserialise(response.readAll())
 	response.close()
 	print(song.timing)
@@ -119,6 +119,7 @@ function playSong(name)
 		if diffTime < 0.02 then
 			diffTime = 0.02
 		end
+		print("diffTime " .. tostring(diffTime))
 		coroutine.yield(os.startTimer(diffTime))
 	end
 
@@ -186,9 +187,10 @@ function main()
 
 		local timerComplete = false
 		function waitForTimer()
+			local timeout = os.startTimer(10)
 			repeat
 				local event, param = os.pullEvent("timer")
-			until param == value
+			until (param == value) or (param == timeout)
 			timerComplete = true
 		end
 
@@ -225,7 +227,9 @@ function main()
 		end
 
 		if not timerComplete then
+			print("a")
 			waitForTimer()
+			print("b")
 		end
 	end
 end
