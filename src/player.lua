@@ -10,8 +10,8 @@ function loadRandomSong(lastSong)
 		os.unloadAPI(lastSong)
 	end
 
-	local response = http.get(manifestUrl).readAll()
-	local manifest = textutils.unserialiseJSON(response)
+	local response = http.get(manifestUrl)
+	local manifest = textutils.unserialiseJSON(response.readAll())
 	response.close()
 
 	local songList = {}
