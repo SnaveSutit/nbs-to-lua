@@ -227,9 +227,7 @@ function main()
 		end
 
 		if not timerComplete then
-			print("a")
 			waitForTimer()
-			print("b")
 		end
 	end
 end
