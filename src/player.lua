@@ -212,11 +212,11 @@ function main()
 				nextSong()
 				sleep(0.5)
 				timerComplete = true
-			elseif ((mouse.x >= 2) or (mouse.x <= 25)) and (mouse.y == 12) then
+			elseif ((mouse.x >= 2) or (mouse.x <= 24)) and (mouse.y == 12) then
 				-- Main volume
 				playButtonSound()
-				mainVolume = math.ceil((mouse.x - 2) / 23 * 100)
-			elseif ((mouse.x >= 2) or (mouse.x <= 25)) and (mouse.y == 15) then
+				mainVolume = math.ceil((mouse.x - 2) / 23 * 1000)
+			elseif ((mouse.x >= 2) or (mouse.x <= 24)) and (mouse.y == 15) then
 				-- Drums Volume
 				playButtonSound()
 				drumsVolume = math.ceil((mouse.x - 2) / 23 * 100)
