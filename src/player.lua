@@ -146,6 +146,7 @@ function nextSong()
 	drawScreen()
 	songName = loadRandomSong(songName)
 	songThread = coroutine.create(playSong)
+	songData = nil
 	paused = false
 end
 
