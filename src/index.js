@@ -29,37 +29,36 @@ function convert(song_path, song_name) {
 		'pling',
 	]
 
-	var last_tick = 0
+	let last_group
 	for (const group of file.Notes) {
 		if (group.length == 0) continue
+		if (!last_group) {
+			last_group = group
+			continue
+		}
 		string_out += '{'
-		for (note of group) {
-			let diff = note.Tick - last_tick
+		for (note of last_group) {
+			let diff = group[0].Tick - note.Tick
 			let inst = instruments[note.Inst]
-			let key = note.Key - 33
+			let key = (note.Key - 33 + 24) % 24
 			output.push({ diff, inst, key })
 			string_out += `{diff=${diff},inst='${inst}',key=${key}},`
-
-			last_tick = note.Tick
 		}
 		string_out += '},'
+		last_group = group
 	}
+	// Get last note of song
+	string_out += '{'
+	for (note of last_group) {
+		let diff = 1
+		let inst = instruments[note.Inst]
+		let key = (note.Key - 33 + 24) % 24
+		output.push({ diff, inst, key })
+		string_out += `{diff=${diff},inst='${inst}',key=${key}},`
+	}
+	string_out += '},'
 
-	string_out = `local notes = {${string_out}}`
-	string_out += `
-for _, group in pairs(notes) do
-	local this_time = os.epoch("utc") / 1000
-	for _, note in pairs(group) do
-		peripheral.call("back", "playNote", note.inst, 100, note.key)
-		print(note.inst, note.key)
-	end
-	local next_time = this_time + (group[1].diff * ${1 / file.Tempo})
-	while os.epoch("utc") / 1000 < next_time do
-	end
-	-- coroutine.yield()
-	sleep(0.05)
-end
-`
+	string_out = `timing=${1 / file.Tempo};notes={${string_out}}`
 
 	// fs.writeFileSync('./out.json', JSON.stringify(output, null, '\t'))
 	fs.writeFileSync(`../out/${song_name}.lua`, string_out)
