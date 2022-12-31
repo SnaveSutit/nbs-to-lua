@@ -112,8 +112,8 @@ function playSong()
 
 		local nextTime = thisTime + (group[1].diff * songData.timing)
 		local diffTime = nextTime - thisTime
-		if diffTime < 0.02 then
-			diffTime = 0.02
+		if diffTime < 0 then
+			diffTime = 0.05
 		end
 		print("diffTime " .. tostring(diffTime))
 		coroutine.yield(os.startTimer(diffTime))
