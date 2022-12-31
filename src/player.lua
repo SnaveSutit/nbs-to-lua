@@ -90,7 +90,7 @@ local groupCount = 0
 local currentGroupIndex = 0
 
 function playSong(name)
-	local url, _ = string.gsub(songGetUrl .. name, " ", "%%20")
+	local url, _ = string.gsub(songGetUrl .. name, " ", "%%%%20")
 	local response = http.get(url)
 	local song = textutils.unserialise(response.readAll())
 	response.close()
