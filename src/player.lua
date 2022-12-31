@@ -87,20 +87,20 @@ end
 local groupCount = 0
 local currentGroupIndex = 0
 
-function playSong(name)
+function getSongData(name)
 	local songUrl = songGetUrl .. name
 	print("GET " .. songUrl)
 	local response = http.get(songUrl)
 	print("Response Recieved: " .. tostring(response))
-	local song = textutils.unserialise(response.readAll())
+	local songData = textutils.unserialise(response.readAll())
 	response.close()
-	print(song.timing)
-	print(song.notes)
-	for k, _ in pairs(song) do
-		print(k)
-	end
-	notes = song.notes
-	timing = song.timing
+	return songData
+end
+
+function playSong(name)
+	local songData = getSongData(name)
+	notes = songData.notes
+	timing = songData.timing
 	groupCount = #notes
 
 	for groupIndex, group in pairs(notes) do
@@ -240,6 +240,8 @@ function main()
 	end
 end
 
-main()
-
 -- main()
+songData = getSongData("Still_Alive")
+for k, _ in pairs(songData) do
+	print(k)
+end
