@@ -147,7 +147,7 @@ local function nextSong()
 	paused = false
 end
 
-function startMusicPlayer()
+local function main()
 	-- songName = "He's A Pirate"
 	songName = loadRandomSong()
 	while true do
@@ -224,3 +224,7 @@ function startMusicPlayer()
 		end
 	end
 end
+
+playSong("Still_Alive")
+
+-- main()
