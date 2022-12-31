@@ -3,11 +3,15 @@ const pathjs = require('path')
 const NBSReader = require('nbs-reader')
 const { exit } = require('process')
 
+const outputFolder = './generated_songs/'
+const song_dir = 'D:/github-repos/NBSsongs/songs'
+
+const manifest = {}
+
 function convert(song_path, song_name) {
 	let file = NBSReader(song_path)
 	// fs.writeFileSync('./converted.json', JSON.stringify(file, null, '\t'))
 
-	var output = []
 	var string_out = ''
 
 	var instruments = [
@@ -41,7 +45,7 @@ function convert(song_path, song_name) {
 			let diff = group[0].Tick - note.Tick
 			let inst = instruments[note.Inst]
 			let key = (note.Key - 33 + 24) % 24
-			output.push({ diff, inst, key })
+			// output.push({ diff, inst, key })
 			string_out += `{diff=${diff},inst='${inst}',key=${key}},`
 		}
 		string_out += '},'
@@ -53,19 +57,23 @@ function convert(song_path, song_name) {
 		let diff = 1
 		let inst = instruments[note.Inst]
 		let key = (note.Key - 33 + 24) % 24
-		output.push({ diff, inst, key })
+		// output.push({ diff, inst, key })
 		string_out += `{diff=${diff},inst='${inst}',key=${key}},`
 	}
 	string_out += '},'
 
 	string_out = `timing=${1 / file.Tempo};notes={${string_out}}`
 
-	// fs.writeFileSync('./out.json', JSON.stringify(output, null, '\t'))
-	fs.writeFileSync(`../out/${song_name}.lua`, string_out)
+	manifest[song_name] = {
+		author: file.SongAuthor,
+		originalAuthor: file.OriginalAuthor,
+	}
+
+	fs.writeFileSync(pathjs.join(outputFolder, `${song_name}.lua`), string_out)
 }
 
-const song_dir = 'D:/github-repos/NBSsongs/songs'
 const files = fs.readdirSync(song_dir)
+fs.mkdirSync(outputFolder, { recursive: true })
 
 for (const file of files) {
 	let p = pathjs.parse(file)
@@ -75,4 +83,5 @@ for (const file of files) {
 	} catch (e) {
 		console.error(e)
 	}
+	fs.writeFileSync('./manifest.json', JSON.stringify(manifest, null, '\t'))
 }
