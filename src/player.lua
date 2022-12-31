@@ -147,78 +147,80 @@ function nextSong()
 	paused = false
 end
 
--- songName = "He's A Pirate"
-songName = loadRandomSong()
-while true do
-	local success, value
-	if not paused then
-		success, value = coroutine.resume(songThread, songName)
-	else
-		success = true
-		value = os.startTimer(0.05)
-	end
-
-	drawScreen()
-
-	if not success then
-		clearTerm()
-		print("Playback Error!")
-		print(value)
-		return
-	end
-
-	if value == "done" then
-		nextSong()
-		value = os.startTimer(2)
-	end
-
-	local mouse
-	function getMouseClick()
-		local event, button, x, y = os.pullEvent("mouse_click")
-		mouse = {button = button, x = x, y = y}
-	end
-
-	local timerComplete = false
-	function waitForTimer()
-		repeat
-			local event, param = os.pullEvent("timer")
-		until param == value
-		timerComplete = true
-	end
-
-	parallel.waitForAny(getMouseClick, waitForTimer)
-
-	if mouse and mouse.button == 1 then
-		if (mouse.x == closeButtonPos.x) and (mouse.y == closeButtonPos.y) then
-			playButtonSound()
-			-- Close Button
-			clearTerm()
-			return
-		elseif ((mouse.x == 10) or (mouse.x == 11)) and (mouse.y == 6) then
-			-- Pause Button
-			playButtonSound()
-			paused = not paused
-		elseif ((mouse.x == 16) or (mouse.x == 17)) and (mouse.y == 6) then
-			-- Skip Button
-			playButtonSound()
-			nextSong()
-			sleep(0.5)
-			timerComplete = true
-		elseif ((mouse.x >= 2) or (mouse.x <= 25)) and (mouse.y == 12) then
-			-- Main volume
-			playButtonSound()
-			mainVolume = math.ceil((mouse.x - 2) / 23 * 100)
-		elseif ((mouse.x >= 2) or (mouse.x <= 25)) and (mouse.y == 15) then
-			-- Drums Volume
-			playButtonSound()
-			drumsVolume = math.ceil((mouse.x - 2) / 23 * 100)
+function startMusicPlayer()
+	-- songName = "He's A Pirate"
+	songName = loadRandomSong()
+	while true do
+		local success, value
+		if not paused then
+			success, value = coroutine.resume(songThread, songName)
+		else
+			success = true
+			value = os.startTimer(0.05)
 		end
-	-- clearTerm()
-	-- print(mouse.button, " ", mouse.x, " ", mouse.y)
-	-- return
-	end
 
-	if not timerComplete then
-		waitForTimer()
+		drawScreen()
+
+		if not success then
+			clearTerm()
+			print("Playback Error!")
+			print(value)
+			return
+		end
+
+		if value == "done" then
+			nextSong()
+			value = os.startTimer(2)
+		end
+
+		local mouse
+		function getMouseClick()
+			local event, button, x, y = os.pullEvent("mouse_click")
+			mouse = {button = button, x = x, y = y}
+		end
+
+		local timerComplete = false
+		function waitForTimer()
+			repeat
+				local event, param = os.pullEvent("timer")
+			until param == value
+			timerComplete = true
+		end
+
+		parallel.waitForAny(getMouseClick, waitForTimer)
+
+		if mouse and mouse.button == 1 then
+			if (mouse.x == closeButtonPos.x) and (mouse.y == closeButtonPos.y) then
+				playButtonSound()
+				-- Close Button
+				clearTerm()
+				return
+			elseif ((mouse.x == 10) or (mouse.x == 11)) and (mouse.y == 6) then
+				-- Pause Button
+				playButtonSound()
+				paused = not paused
+			elseif ((mouse.x == 16) or (mouse.x == 17)) and (mouse.y == 6) then
+				-- Skip Button
+				playButtonSound()
+				nextSong()
+				sleep(0.5)
+				timerComplete = true
+			elseif ((mouse.x >= 2) or (mouse.x <= 25)) and (mouse.y == 12) then
+				-- Main volume
+				playButtonSound()
+				mainVolume = math.ceil((mouse.x - 2) / 23 * 100)
+			elseif ((mouse.x >= 2) or (mouse.x <= 25)) and (mouse.y == 15) then
+				-- Drums Volume
+				playButtonSound()
+				drumsVolume = math.ceil((mouse.x - 2) / 23 * 100)
+			end
+		-- clearTerm()
+		-- print(mouse.button, " ", mouse.x, " ", mouse.y)
+		-- return
+		end
+
+		if not timerComplete then
+			waitForTimer()
+		end
 	end
 end
