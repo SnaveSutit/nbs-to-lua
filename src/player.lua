@@ -22,7 +22,7 @@ function loadRandomSong(lastSong)
 	local index, chosenSong
 	repeat
 		index = math.random(#songList)
-		chosenSong, _ = pairs(songList)[index]
+		chosenSong, _ = songList[index]
 	until not (lastSong == chosenSong)
 
 	return chosenSong
@@ -90,10 +90,9 @@ local groupCount = 0
 local currentGroupIndex = 0
 
 function playSong(name)
-	local song = textutils.unserialise(http.get(songGetUrl .. name).readAll())
-	-- os.loadAPI("./songs/" .. name .. ".lua")
-	-- timing = _G[name].timing
-	-- notes = _G[name].notes
+	local response = http.get(songGetUrl .. name)
+	local song = textutils.unserialise(response.readAll())
+	response.close()
 	notes = song.notes
 	timing = song.timing
 	groupCount = #notes
