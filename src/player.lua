@@ -90,9 +90,8 @@ local groupCount = 0
 local currentGroupIndex = 0
 
 function playSong(name)
-	local response = http.get(songGetUrl .. name)
+	local response = http.get(string.gsub(songGetUrl .. name, " ", "%20"))
 	local song = textutils.unserialise(response.readAll())
-	coroutine.yield(song)
 	response.close()
 	notes = song.notes
 	timing = song.timing
@@ -154,10 +153,6 @@ while true do
 	local success, value
 	if not paused then
 		success, value = coroutine.resume(songThread, songName)
-		for k, _ in pairs(value) do
-			print(k)
-		end
-		break
 	else
 		success = true
 		value = os.startTimer(0.05)
