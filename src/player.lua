@@ -5,7 +5,7 @@ local manifestUrl =
 
 -- local songFiles = fs.list("./songs/")
 
-local function loadRandomSong(lastSong)
+function loadRandomSong(lastSong)
 	if lastSong then
 		os.unloadAPI(lastSong)
 	end
@@ -38,22 +38,22 @@ local notes, timing
 local mainVolume = 100
 local drumsVolume = 50
 
-local function playButtonSound()
+function playButtonSound()
 	peripheral.call("back", "playNote", "bit", 1, 18)
 end
 
-local function newline(n)
+function newline(n)
 	cursorY = cursorY + (n or 1)
 	term.setCursorPos(1, cursorY)
 end
 
-local function clearTerm()
+function clearTerm()
 	cursorY = 1
 	term.clear()
 	term.setCursorPos(1, cursorY)
 end
 
-local function drawProgressBar(max, cur, label)
+function drawProgressBar(max, cur, label)
 	local value = cur / max
 	local maxBarFill = termSizeX - 2
 	local curBarFill = maxBarFill * value
@@ -73,7 +73,7 @@ local function drawProgressBar(max, cur, label)
 	)
 end
 
-local function makePaddedText(text, left, right, char)
+function makePaddedText(text, left, right, char)
 	char = char or " "
 	local padding
 	if left and right then
@@ -89,7 +89,7 @@ end
 local groupCount = 0
 local currentGroupIndex = 0
 
-local function playSong(name)
+function playSong(name)
 	local response = http.get(songGetUrl .. name)
 	local song = textutils.unserialise(response.readAll())
 	response.close()
@@ -121,7 +121,7 @@ local function playSong(name)
 end
 songThread = coroutine.create(playSong)
 
-local function drawScreen()
+function drawScreen()
 	clearTerm()
 	term.write(makePaddedText(" X", true))
 	newline()
@@ -138,7 +138,7 @@ local function drawScreen()
 	drawProgressBar(100, drumsVolume, "Drum Volume")
 end
 
-local function nextSong()
+function nextSong()
 	paused = true
 	songName = makePaddedText("...Intermission...", true, true)
 	drawScreen()
@@ -147,7 +147,7 @@ local function nextSong()
 	paused = false
 end
 
-local function main()
+function main()
 	-- songName = "He's A Pirate"
 	songName = loadRandomSong()
 	while true do
@@ -225,6 +225,6 @@ local function main()
 	end
 end
 
-playSong("Still_Alive")
+main()
 
 -- main()
