@@ -163,6 +163,7 @@ while true do
 	if not success then
 		clearTerm()
 		print("Playback Error!")
+		print(value)
 		return
 	end
 
