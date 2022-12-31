@@ -32,9 +32,9 @@ local closeButtonPos = {x = termSizeX, y = 1}
 local paused = false
 local songThread
 local songName = ""
-local notes, timing
 local mainVolume = 100
 local drumsVolume = 50
+local songData
 
 function playButtonSound()
 	peripheral.call("back", "playNote", "bit", 1, 18)
@@ -97,13 +97,10 @@ function getSongData(name)
 	return songData
 end
 
-function playSong(name)
-	local songData = getSongData(name)
-	notes = songData.notes
-	timing = songData.timing
-	groupCount = #notes
+function playSong()
+	groupCount = #songData.notes
 
-	for groupIndex, group in pairs(notes) do
+	for groupIndex, group in pairs(songData.notes) do
 		currentGroupIndex = groupIndex
 		local thisTime = os.epoch("utc") / 1000
 
@@ -115,7 +112,7 @@ function playSong(name)
 			peripheral.call("back", "playNote", note.inst, volume, note.key)
 		end
 
-		local nextTime = thisTime + (group[1].diff * timing)
+		local nextTime = thisTime + (group[1].diff * songData.timing)
 		local diffTime = nextTime - thisTime
 		if diffTime < 0.02 then
 			diffTime = 0.02
@@ -155,13 +152,16 @@ function nextSong()
 end
 
 function main()
-	-- songName = "He's A Pirate"
 	songName = loadRandomSong()
+	songData = getSongData(songName)
 	while true do
 		local success, value
 		if not paused then
+			if not songData then
+				songData = getSongData(songName)
+			end
 			print("Player Resume")
-			success, value = coroutine.resume(songThread, songName)
+			success, value = coroutine.resume(songThread)
 			print(
 				"Player Yield: Success = " ..
 					tostring(success) .. " Value = " .. tostring(value)
@@ -240,8 +240,8 @@ function main()
 	end
 end
 
--- main()
-songData = getSongData("Still_Alive")
-for k, _ in pairs(songData) do
-	print(k)
-end
+main()
+-- songData = getSongData("Still_Alive")
+-- for k, _ in pairs(songData) do
+-- 	print(k)
+-- end
