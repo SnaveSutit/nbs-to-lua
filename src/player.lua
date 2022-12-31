@@ -93,6 +93,11 @@ function playSong(name)
 	local response = http.get(songGetUrl .. name)
 	local song = textutils.unserialise(response.readAll())
 	response.close()
+	print(song.timing)
+	print(song.notes)
+	for k, _ in pairs(song) do
+		print(k)
+	end
 	notes = song.notes
 	timing = song.timing
 	groupCount = #notes
@@ -122,20 +127,20 @@ end
 songThread = coroutine.create(playSong)
 
 function drawScreen()
-	clearTerm()
-	term.write(makePaddedText(" X", true))
-	newline()
-	term.write(makePaddedText(" Now Playing ", true, true, "-"))
-	newline(2)
-	term.write(makePaddedText(songName, true, true))
-	newline(2)
-	term.write(makePaddedText((paused and "|>" or "||") .. "    >>", true, true))
-	newline(2)
-	drawProgressBar(groupCount, currentGroupIndex)
-	newline(2)
-	drawProgressBar(100, mainVolume, "Main Volume")
-	newline(2)
-	drawProgressBar(100, drumsVolume, "Drum Volume")
+	-- clearTerm()
+	-- term.write(makePaddedText(" X", true))
+	-- newline()
+	-- term.write(makePaddedText(" Now Playing ", true, true, "-"))
+	-- newline(2)
+	-- term.write(makePaddedText(songName, true, true))
+	-- newline(2)
+	-- term.write(makePaddedText((paused and "|>" or "||") .. "    >>", true, true))
+	-- newline(2)
+	-- drawProgressBar(groupCount, currentGroupIndex)
+	-- newline(2)
+	-- drawProgressBar(100, mainVolume, "Main Volume")
+	-- newline(2)
+	-- drawProgressBar(100, drumsVolume, "Drum Volume")
 end
 
 function nextSong()
