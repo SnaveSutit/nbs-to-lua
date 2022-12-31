@@ -135,7 +135,7 @@ function drawScreen()
 	newline(2)
 	drawProgressBar(groupCount, currentGroupIndex)
 	newline(2)
-	drawProgressBar(100, mainVolume, "Main Volume")
+	drawProgressBar(1000, mainVolume, "Main Volume")
 	newline(2)
 	drawProgressBar(100, drumsVolume, "Drum Volume")
 end
