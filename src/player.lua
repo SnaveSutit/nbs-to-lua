@@ -91,8 +91,8 @@ local currentGroupIndex = 0
 
 function playSong(name)
 	local response = http.get(songGetUrl .. name)
-	coroutine.yield(songGetUrl .. name)
 	local song = textutils.unserialise(response.readAll())
+	coroutine.yield(song)
 	response.close()
 	notes = song.notes
 	timing = song.timing
@@ -154,7 +154,9 @@ while true do
 	local success, value
 	if not paused then
 		success, value = coroutine.resume(songThread, songName)
-		print(value)
+		for k, _ in pairs(value) do
+			print(k)
+		end
 		break
 	else
 		success = true
