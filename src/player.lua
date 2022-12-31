@@ -12,13 +12,18 @@ function loadRandomSong(lastSong)
 
 	local manifest = textutils.unserialiseJSON(http.get(manifestUrl).readAll())
 
+	local songList = {}
+	for songName, _ in pairs(manifest) do
+		table.insert(songList, songName)
+	end
+	manifest.close()
+
 	local index, chosenSong
 	repeat
-		index = math.random(#manifest)
-		chosenSong, _ = pairs(manifest)[index]
+		index = math.random(#songList)
+		chosenSong, _ = pairs(songList)[index]
 	until not (lastSong == chosenSong)
 
-	manifest.close()
 	return chosenSong
 end
 
