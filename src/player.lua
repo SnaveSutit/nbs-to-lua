@@ -97,6 +97,16 @@ local function drawProgressBar(max, cur, label)
 	)
 end
 
+local function getProgressBarText(cur, max, screenSizeX)
+	local value = cur / max
+	local maxBarFill = screenSizeX - 2
+	local curBarFill = maxBarFill * value
+
+	return "[" ..
+		string.rep("#", curBarFill) ..
+		string.rep(" ", maxBarFill - math.floor(curBarFill)) .. "]"
+end
+
 local groupCount = 0
 local currentGroupIndex = 0
 
@@ -161,10 +171,12 @@ local function updateCreateSource()
 	while true do
 		local sizeX, sizeY = createSource.getSize()
 		createSource.clear()
-		createSource.setCursorPos(math.ceil(sizeX / 2) - 6, 1)
+		createSource.setCursorPos(math.floor(sizeX / 2) - 6, 1)
 		createSource.write("Now Playing")
-		createSource.setCursorPos(math.ceil(sizeX / 2) - (#songName / 2), 2)
+		createSource.setCursorPos(math.floor(sizeX / 2) - (#songName / 2), 2)
 		createSource.write(songName)
+		createSource.setCursorPos(1, 3)
+		createSource.write(getProgressBarText(currentGroupIndex, groupCount, sizeX))
 		sleep(5)
 	end
 end
