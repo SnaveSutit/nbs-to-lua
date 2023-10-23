@@ -221,7 +221,7 @@ local function main()
 			timerComplete = true
 		end
 
-		parallel.waitForAny(getMouseClick, waitForTimer, drawScreen)
+		parallel.waitForAny(getMouseClick, waitForTimer, drawScreen, updateCreateSource)
 
 		if mouse and mouse.button == 1 then
 			if (mouse.x == closeButtonPos.x) and (mouse.y == closeButtonPos.y) then
