@@ -1,9 +1,23 @@
-local songGetUrl =
-	"https://raw.githubusercontent.com/SnaveSutit/nbs-to-lua/main/generated_songs/"
+local songFolderUrl =
+"https://raw.githubusercontent.com/SnaveSutit/nbs-to-lua/main/generated_songs/"
 local manifestUrl =
-	"https://raw.githubusercontent.com/SnaveSutit/nbs-to-lua/main/manifest.json"
+"https://raw.githubusercontent.com/SnaveSutit/nbs-to-lua/main/manifest.json"
 
-function loadRandomSong(lastSong)
+local speaker = peripheral.find("speaker")
+local createSource = peripheral.find("create_source")
+
+local cursorY = 1
+local termSizeX, termSizeY = term.getSize()
+local closeButtonPos = { x = termSizeX, y = 1 }
+local paused = false
+local shuffle = true
+local songThread
+local songName = ""
+local mainVolume = 100
+local drumsVolume = 50
+local songData
+
+local function loadNextSong(lastSong)
 	if lastSong then
 		os.unloadAPI(lastSong)
 	end
@@ -17,41 +31,53 @@ function loadRandomSong(lastSong)
 		table.insert(songList, songName)
 	end
 
-	local index, chosenSong
-	repeat
-		index = math.random(#songList)
-		chosenSong, _ = songList[index]
-	until not (lastSong == chosenSong)
+	local index = 1
+	local chosenSong
+	if shuffle then
+		repeat
+			index = math.random(#songList)
+			chosenSong = songList[index]
+		until not (lastSong == chosenSong)
+	else
+		index = index + 1
+		if index > #songList then
+			index = 1
+		end
+	end
+	chosenSong = songList[index]
 
 	return chosenSong
 end
 
-local cursorY = 1
-local termSizeX, termSizeY = term.getSize()
-local closeButtonPos = {x = termSizeX, y = 1}
-local paused = false
-local songThread
-local songName = ""
-local mainVolume = 100
-local drumsVolume = 50
-local songData
-
-function playButtonSound()
-	peripheral.call("back", "playNote", "bit", 1, 18)
+local function playButtonSound()
+	speaker.playSound("ui.button.click")
 end
 
-function newline(n)
+local function newline(n)
 	cursorY = cursorY + (n or 1)
 	term.setCursorPos(1, cursorY)
 end
 
-function clearTerm()
+local function clearTerm()
 	cursorY = 1
 	term.clear()
 	term.setCursorPos(1, cursorY)
 end
 
-function drawProgressBar(max, cur, label)
+local function makePaddedText(text, left, right, char)
+	char = char or " "
+	local padding
+	if left and right then
+		padding = (termSizeX - #text) / 2
+		return string.rep(char, math.ceil(padding)) ..
+			text .. string.rep(char, padding)
+	end
+	padding = termSizeX - #text
+	return (left and string.rep(char, padding) or "") ..
+		text .. (right and string.rep(char, padding) or "")
+end
+
+local function drawProgressBar(max, cur, label)
 	local value = cur / max
 	local maxBarFill = termSizeX - 2
 	local curBarFill = maxBarFill * value
@@ -66,48 +92,34 @@ function drawProgressBar(max, cur, label)
 	newline()
 	term.write(
 		"[" ..
-			string.rep("#", curBarFill) ..
-				string.rep(" ", maxBarFill - math.floor(curBarFill)) .. "]"
+		string.rep("#", curBarFill) ..
+		string.rep(" ", maxBarFill - math.floor(curBarFill)) .. "]"
 	)
-end
-
-function makePaddedText(text, left, right, char)
-	char = char or " "
-	local padding
-	if left and right then
-		padding = (termSizeX - #text) / 2
-		return string.rep(char, math.ceil(padding)) ..
-			text .. string.rep(char, padding)
-	end
-	padding = termSizeX - #text
-	return (left and string.rep(char, padding) or "") ..
-		text .. (right and string.rep(char, padding) or "")
 end
 
 local groupCount = 0
 local currentGroupIndex = 0
 
-function getSongData(name)
-	local songUrl = songGetUrl .. name
+local function getSongData(name)
+	local songUrl = songFolderUrl .. name
 	local response = http.get(songUrl)
-	local songData = textutils.unserialise(response.readAll())
+	songData = textutils.unserialise(response.readAll())
 	response.close()
-	return songData
 end
 
-function playSong()
+local function playSong()
 	groupCount = #songData.notes
 
 	for groupIndex, group in pairs(songData.notes) do
 		currentGroupIndex = groupIndex
 		local thisTime = os.epoch("utc") / 1000
 
-		for noteIndex, note in pairs(group) do
+		for _, note in pairs(group) do
 			local volume = 0.01 * mainVolume
 			if (note.inst == "snare" or note.inst == "hat" or note.inst == "basedrum") then
 				volume = 0.01 * (drumsVolume * volume)
 			end
-			peripheral.call("back", "playNote", note.inst, volume, note.key)
+			speaker.playNote(note.inst, volume, note.key)
 		end
 
 		local nextTime = thisTime + (group[1].diff * songData.timing)
@@ -119,51 +131,68 @@ function playSong()
 end
 songThread = coroutine.create(playSong)
 
-function drawScreen()
-	clearTerm()
-	term.write(makePaddedText(" X", true))
-	newline()
-	term.write(makePaddedText(" Now Playing ", true, true, "-"))
-	newline(2)
-	term.write(makePaddedText(songName, true, true))
-	newline(2)
-	term.write(makePaddedText((paused and "|>" or "||") .. "    >>", true, true))
-	newline(2)
-	drawProgressBar(groupCount, currentGroupIndex)
-	newline(2)
-	drawProgressBar(1000, mainVolume, "Main Volume")
-	newline(2)
-	drawProgressBar(100, drumsVolume, "Drum Volume")
-	newline(termSizeY - cursorY)
-	term.write(makePaddedText("Created by SnaveSutit", true, false))
+local function drawScreen()
+	while true do
+		clearTerm()
+		term.write(makePaddedText(" X", true))
+		newline()
+		term.write(makePaddedText(" Now Playing ", true, true, "-"))
+		newline(2)
+		term.write(makePaddedText(songName, true, true))
+		newline(2)
+		term.write(makePaddedText((paused and "|>" or "||") .. "    >>", true, true))
+		newline(2)
+		drawProgressBar(groupCount, currentGroupIndex)
+		newline(2)
+		drawProgressBar(1000, mainVolume, "Main Volume")
+		newline(2)
+		drawProgressBar(100, drumsVolume, "Drum Volume")
+		newline(termSizeY - cursorY)
+		term.write(makePaddedText("Created by SnaveSutit", true, false))
+		sleep(0.05)
+	end
 end
 
-function nextSong()
+local function updateCreateSource()
+	while not createSource do
+		createSource = peripheral.find("create_source")
+		sleep(5)
+	end
+	while true do
+		local sizeX, sizeY = createSource.getSize()
+		createSource.clear()
+		createSource.setCursorPose(sizeX - 6, 1)
+		createSource.write("Now Playing")
+		createSource.setCursorPose(sizeX - (#songName / 2), 2)
+		createSource.write(songName)
+		sleep(5)
+	end
+end
+
+local function nextSong()
 	paused = true
 	songName = makePaddedText("...Intermission...", true, true)
 	drawScreen()
-	songName = loadRandomSong(songName)
+	songName = loadNextSong(songName)
 	songThread = coroutine.create(playSong)
 	songData = nil
 	paused = false
 end
 
-function main()
-	songName = loadRandomSong()
-	songData = getSongData(songName)
+local function main()
+	songName = loadNextSong()
+	getSongData(songName)
 	while true do
 		local success, value
 		if not paused then
 			if not songData then
-				songData = getSongData(songName)
+				getSongData(songName)
 			end
 			success, value = coroutine.resume(songThread)
 		else
 			success = true
 			value = os.startTimer(0.05)
 		end
-
-		drawScreen()
 
 		if not success then
 			clearTerm()
@@ -178,13 +207,13 @@ function main()
 		end
 
 		local mouse
-		function getMouseClick()
-			local event, button, x, y = os.pullEvent("mouse_click")
-			mouse = {button = button, x = x, y = y}
+		local function getMouseClick()
+			local _, button, x, y = os.pullEvent("mouse_click")
+			mouse = { button = button, x = x, y = y }
 		end
 
 		local timerComplete = false
-		function waitForTimer()
+		local function waitForTimer()
 			local timeout = os.startTimer(10)
 			repeat
 				local event, param = os.pullEvent("timer")
@@ -192,7 +221,7 @@ function main()
 			timerComplete = true
 		end
 
-		parallel.waitForAny(getMouseClick, waitForTimer)
+		parallel.waitForAny(getMouseClick, waitForTimer, drawScreen)
 
 		if mouse and mouse.button == 1 then
 			if (mouse.x == closeButtonPos.x) and (mouse.y == closeButtonPos.y) then
@@ -219,9 +248,9 @@ function main()
 				playButtonSound()
 				drumsVolume = math.ceil((mouse.x - 2) / 23 * 100)
 			end
-		-- clearTerm()
-		-- print(mouse.button, " ", mouse.x, " ", mouse.y)
-		-- return
+			-- clearTerm()
+			-- print(mouse.button, " ", mouse.x, " ", mouse.y)
+			-- return
 		end
 
 		if not timerComplete then
@@ -231,7 +260,7 @@ function main()
 end
 
 main()
--- songData = getSongData("Still_Alive")
+-- getSongData("Still_Alive")
 -- for k, _ in pairs(songData) do
 -- 	print(k)
 -- end
