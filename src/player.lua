@@ -161,9 +161,9 @@ local function updateCreateSource()
 	while true do
 		local sizeX, sizeY = createSource.getSize()
 		createSource.clear()
-		createSource.setCursorPos(sizeX - 6, 1)
+		createSource.setCursorPos((sizeX / 2) - 6, 1)
 		createSource.write("Now Playing")
-		createSource.setCursorPos(sizeX - (#songName / 2), 2)
+		createSource.setCursorPos((sizeX / 2) - (#songName / 2), 2)
 		createSource.write(songName)
 		sleep(5)
 	end
