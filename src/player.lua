@@ -172,7 +172,6 @@ end
 local function nextSong()
 	paused = true
 	songName = makePaddedText("...Intermission...", true, true)
-	drawScreen()
 	songName = loadNextSong(songName)
 	songThread = coroutine.create(playSong)
 	songData = nil
