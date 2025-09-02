@@ -7,6 +7,12 @@ end
 
 term.clear()
 
+local customSongFilePath = ...
+
+if customSongFilePath and not fs.exists(customSongFilePath) then
+	error("Custom song file path does not exist!")
+end
+
 --------------------------------
 -- Util
 --------------------------------
@@ -163,8 +169,21 @@ end
 
 local songList = {}
 
-local function getSongList()
-	local response, err = http.get("https://api.github.com/repos/flytegg/nbs-songs/contents/")
+local function getSongListFromFolder(path)
+	songList = {}
+	local files = fs.list(path)
+	for _, fileName in pairs(files) do
+		if fileName:sub(-4) == ".nbs" then
+			table.insert(songList, {
+				name = fileName:sub(1, -5),
+				path = fs.combine(path, fileName)
+			})
+		end
+	end
+end
+
+local function getSongListFromRepo(url)
+	local response, err = http.get(url)
 	if not response then
 		error("Failed to get song list from repo: " .. tostring(err))
 	end
@@ -214,7 +233,7 @@ local function loadSong(songListItem, path)
 	return ONBS.open(path, true)
 end
 
-local function loadRandomSong()
+local function loadShuffledSong()
 	index = math.random(#songList)
 	local songListItem = songList[index]
 
@@ -223,7 +242,14 @@ local function loadRandomSong()
 		fs.delete(savePath)
 	end
 
-	local song = loadSong(songListItem, savePath)
+	local song
+
+	if customSongFilePath then
+		song = ONBS.open(songListItem.path, true)
+	else
+		song = loadSong(songListItem, savePath)
+	end
+
 	if song.meta.name == "shuffledSong" then
 		song.meta.name = songListItem.name
 	end
@@ -236,7 +262,7 @@ end
 --------------------------------
 
 local mainVolume = 100
-local drumVolume = 25
+local drumVolume = 50
 
 local activeSong = nil
 local paused = false
@@ -480,7 +506,13 @@ local function main()
 
 	term.setCursorPos(1, 1)
 	term.write("Fetching song list...")
-	getSongList()
+
+	if customSongFilePath then
+		getSongListFromFolder(customSongFilePath)
+	else
+		getSongListFromRepo("https://api.github.com/repos/flytegg/nbs-songs/contents/")
+	end
+
 
 	while true do
 		initializeDisplay()
@@ -491,7 +523,7 @@ local function main()
 		term.setCursorPos(1, 5)
 		term.clearLine()
 
-		activeSong = loadRandomSong()
+		activeSong = loadShuffledSong()
 		parallel.waitForAny(playActiveSong, updateDisplay, mouseInput)
 		os.sleep(1)
 	end
