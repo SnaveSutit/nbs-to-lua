@@ -5,8 +5,6 @@ if not SPEAKER then
 	error("No speaker found!")
 end
 
-term.clear()
-
 local customSongFilePath = ...
 
 if customSongFilePath and not fs.exists(customSongFilePath) then
@@ -267,6 +265,7 @@ local drumVolume = 50
 local activeSong = nil
 local paused = false
 local skip = false
+local currentTickIndex = 1
 
 local INSTRUMENTS = {
 	'harp',
@@ -304,11 +303,8 @@ local function sleep(seconds)
 	for _ = 1, ticks do os.sleep(0.05) end
 end
 
-local function shuffleSong()
-	index = math.random(#songList)
-end
-
 local function playActiveSong()
+	currentTickIndex = 1
 	for _, tick in ipairs(activeSong.ticks) do
 		while paused do os.sleep(0.05) end
 
@@ -329,13 +325,23 @@ local function playActiveSong()
 			end
 		end
 
+		currentTickIndex = currentTickIndex + 1
 		sleep(1 / activeSong.meta.tempo)
 	end
+
+	os.sleep(1)
 end
 
 --------------------------------
 -- GUI
 --------------------------------
+
+local function drawTextAt(x, y, text, color, backgroundColor)
+	term.setBackgroundColor(backgroundColor or colors.black)
+	term.setCursorPos(x, y)
+	term.setTextColor(color or colors.white)
+	term.write(text)
+end
 
 local function drawCenteredText(text, y, color, bufferChar, bufferColor)
 	local screenSizeX, _ = term.getSize()
@@ -343,8 +349,8 @@ local function drawCenteredText(text, y, color, bufferChar, bufferColor)
 	local startX = math.floor((screenSizeX - textLength) / 2) + 1
 
 	term.setCursorPos(1, y)
-	term.clearLine()
 	if bufferChar and bufferColor then
+		term.clearLine()
 		term.setTextColor(bufferColor)
 		term.write(string.rep(bufferChar, startX))
 		term.setCursorPos(1, y)
@@ -361,11 +367,45 @@ local function drawCenteredText(text, y, color, bufferChar, bufferColor)
 	end
 end
 
+local function setInfoText(text, textColor)
+	term.setCursorPos(1, 4)
+	term.clearLine()
+	drawCenteredText(text, 4, textColor, " ", colors.black)
+	term.setCursorPos(1, 5)
+	term.clearLine()
+end
+
 local function drawHorizontalLine(y, char, color)
 	local screenSizeX, _ = term.getSize()
 	term.setTextColor(color)
 	term.setCursorPos(1, y)
 	term.write(string.rep(char, screenSizeX))
+end
+
+local function drawTimeRemaining()
+	local totalTicks = activeSong.meta.length
+	local ticksPassed = currentTickIndex - 1
+	local timePassed = ticksPassed / activeSong.meta.tempo
+	local timeRemaining = math.max(0, (totalTicks - ticksPassed + 3) / activeSong.meta.tempo)
+	local minutesPassed = math.floor(timePassed / 60)
+	local secondsPassed = math.floor(timePassed % 60)
+	local minutesRemaining = math.floor(timeRemaining / 60)
+	local secondsRemaining = math.floor(timeRemaining % 60)
+	local timePassedText = string.format("%02d:%02d", minutesPassed, secondsPassed)
+	local timeRemainingText = string.format("%02d:%02d", minutesRemaining, secondsRemaining)
+
+	local screenSizeX = term.getSize()
+
+	drawTextAt(2, 7, timePassedText, colors.lightGray)
+	drawTextAt(screenSizeX - 5, 7, timeRemainingText, colors.lightGray)
+
+	local progressBarWidth = screenSizeX - 2
+	local progressBarFilled = math.floor((ticksPassed / totalTicks) * progressBarWidth)
+	local progressBarEmpty = progressBarWidth - progressBarFilled
+
+	drawTextAt(1, 6, "[", colors.gray)
+	drawCenteredText(("#"):rep(progressBarFilled) .. (" "):rep(progressBarEmpty), 6, colors.green)
+	drawTextAt(screenSizeX, 6, "]", colors.gray)
 end
 
 local function drawNowPlayingSlot()
@@ -376,14 +416,14 @@ local function drawNowPlayingSlot()
 	term.setCursorPos(1, 1)
 
 	drawCenteredText(" Now Playing ", 2, colors.lightGray, "\140", colors.gray)
-	drawHorizontalLine(7, "\131", colors.gray)
+	drawHorizontalLine(8, "\131", colors.gray)
 end
 
 local function drawScrollingText(text, y, color, speed)
 	local screenSizeX, _ = term.getSize()
 	if #text <= screenSizeX then
 		term.setBackgroundColor(colors.black)
-		drawCenteredText(text, y, color)
+		drawCenteredText(text, y, color, " ", colors.black)
 		return
 	end
 
@@ -409,26 +449,27 @@ local function drawNowPlayingTitle()
 	else
 		drawScrollingText("by " .. activeSong.meta.author, 5, colors.yellow, 4)
 	end
+	drawTimeRemaining()
 end
 
 local screenSizeX, screenSizeY = term.getSize()
 local BUTTONS = {
 	{
 		rect = {
-			screenSizeX / 2 - 4,
+			screenSizeX / 2 - 5,
 			8,
-			2,
+			4,
 			1
 		},
 		draw = function()
 			local screenSizeX, _ = term.getSize()
 			term.setBackgroundColor(colors.black)
 			term.setTextColor(colors.white)
-			term.setCursorPos(screenSizeX / 2 - 4, 8)
+			term.setCursorPos(screenSizeX / 2 - 5, 8)
 			if paused then
-				term.write("|>")
+				term.write(" |> ")
 			else
-				term.write("||")
+				term.write(" || ")
 			end
 		end,
 		click = function()
@@ -437,9 +478,9 @@ local BUTTONS = {
 	},
 	{
 		rect = {
-			screenSizeX / 2 + 4,
+			screenSizeX / 2 + 5,
 			8,
-			2,
+			4,
 			1
 		},
 		draw = function()
@@ -447,7 +488,7 @@ local BUTTONS = {
 			term.setBackgroundColor(colors.black)
 			term.setTextColor(colors.white)
 			term.setCursorPos(screenSizeX / 2 + 4, 8)
-			term.write(">>")
+			term.write(" >> ")
 		end,
 		click = function()
 			skip = true
@@ -491,11 +532,7 @@ local function mouseInput()
 
 		if skip then
 			skip = false
-			term.setCursorPos(1, 4)
-			term.clearLine()
-			drawCenteredText(" Song Skipped! ", 4, colors.orange, " ", colors.black)
-			term.setCursorPos(1, 5)
-			term.clearLine()
+			setInfoText("Song Skipped!", colors.orange)
 			break
 		end
 	end
@@ -517,11 +554,7 @@ local function main()
 	while true do
 		initializeDisplay()
 
-		term.setCursorPos(1, 4)
-		term.clearLine()
-		drawCenteredText("Downloading...", 4, colors.orange, " ", colors.black)
-		term.setCursorPos(1, 5)
-		term.clearLine()
+		setInfoText("Downloading...", colors.orange)
 
 		activeSong = loadShuffledSong()
 		parallel.waitForAny(playActiveSong, updateDisplay, mouseInput)
