@@ -137,7 +137,32 @@ ONBS.parser.nextTick = function(file, song)
 	end
 	return jumps > 0
 end
-ONBS.open = function(path, wrapNotes)
+
+--- @class ONBS.LoadOptions
+--- @field wrapNotes boolean
+
+--- @param fileData table - fs.FileHandle
+--- @param options ONBS.LoadOptions
+function ONBS.load(fileData, options)
+	options = options or {}
+
+	local song = {
+		meta = ONBS.parser.meta(fileData),
+		ticks = {},
+	}
+
+	while ONBS.parser.nextTick(fileData, song) do
+		local tick = ONBS.parser.tick(fileData, song, options.wrapNotes)
+		table.insert(song.ticks, tick)
+		-- Prevent "too long without yielding" error
+		os.queueEvent("ONBS_TICK_PARSED")
+		os.pullEvent("ONBS_TICK_PARSED")
+	end
+
+	return song
+end
+
+function ONBS.open(path, wrapNotes)
 	local file = fs.open(path, "rb")
 	if not file then return nil end
 	local song = {
@@ -207,27 +232,19 @@ if not fs.exists("./.nbs-player/songs") then
 	fs.makeDir("./.nbs-player/songs")
 end
 
-local function downloadSong(songListItem, savePath)
-	savePath = savePath or "./.nbs-player/songs/{SONG_NAME}.nbs"
-	savePath = savePath:gsub('{SONG_NAME}', songListItem.name)
-
+local function downloadSong(songListItem)
 	local response, err = http.get(songListItem.url)
 	if not response then
 		error("Failed to download song: " .. tostring(err))
 	end
-
-	local file = fs.open(savePath, "wb")
-	file.write(response.readAll())
-	file.close()
-	response.close()
+	return response
 end
 
 local function loadSong(songListItem, path)
-	path = path or "./.nbs-player/songs/{SONG_NAME}.nbs"
-	path = path:gsub('{SONG_NAME}', songListItem.name)
 	if not fs.exists(path) then
-		downloadSong(songListItem, path)
+		downloadSong(songListItem)
 	end
+
 	return ONBS.open(path, true)
 end
 
